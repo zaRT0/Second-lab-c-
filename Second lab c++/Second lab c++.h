@@ -35,6 +35,8 @@ namespace linkedList {
         void pop_head();
         void pop_tail();
         void delete_node(Node<T>& node_to_delede);
+        T evaluate_at(T x)const;
+        void print_coeff()const;
     };
 
     template<typename T>
@@ -259,4 +261,49 @@ namespace linkedList {
         }
     }
 
+    template<typename T>
+    T LinkedList<T>::evaluate_at(T x) const {
+        if (!_head) {
+            cerr << "List is empty." << endl;
+            return 0;
+        }
+
+        Node<T>* current = _head;
+        T result = 0;
+        int exponent = 0;
+
+        do {
+            result += current->_cofficient * pow(x, exponent);
+            current = current->_next;
+            exponent++;
+        } while (current != _head);
+
+        return result;
+    }
+
+    template<typename T>
+    void LinkedList<T>::print_coeff() const {
+        if (!_head) {
+            cout << "List is empty." << endl;
+            return;
+        }
+
+        Node<T>* current = _head;
+        int exponent = 0;
+
+        do {
+            if (current->_cofficient != 0) {
+                if (exponent == 0) {
+                    cout << current->_cofficient;
+                }
+                else {
+                    cout << (current->_cofficient > 0 ? "+" : "") << current->_cofficient << "*x^" << exponent;
+                }
+            }
+            current = current->_next;
+            exponent++;
+        } while (current != _head);
+
+        cout << endl;
+    }
 }
