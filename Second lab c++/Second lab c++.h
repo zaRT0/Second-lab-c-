@@ -4,14 +4,16 @@
 #include <ctime>
 #include <cmath>
 using namespace std;
-namespace linkedList {
+namespace list {
 
     template<typename T>
     class Node {
     public:
         T _cofficient;
         Node* _next;
-        Node(T cofficient) :_cofficient(cofficient), _next(nullptr) {}
+        int _power;
+        int get_coeff();
+        Node(T cofficient, int power) :_cofficient(cofficient), _next(nullptr), _power(power) {}
     };
 
     template <typename T>
@@ -28,10 +30,11 @@ namespace linkedList {
         T operator[](int index) const;
         LinkedList(const LinkedList<T>& other);
         LinkedList& operator=(const LinkedList<T>& other);
-        void push_head(T cofficient);
+        void push_head(T cofficient, int power);
         void push_head(LinkedList<T> other);
-        void push_tail(T cofficient);
+        void push_tail(T cofficient, int power);
         void push_tail(LinkedList<T> other);
+        void print_power()const;
         void pop_head();
         void pop_tail();
         void delete_node(Node<T>& node_to_delede);
@@ -40,11 +43,32 @@ namespace linkedList {
     };
 
     template<typename T>
+    void LinkedList<T>::print_power()const {
+        Node<T>* current = _head;
+        do {
+            std::cout << current->_cofficient << "x^" << current->_power;
+            current = current->_next;
+            if (current != _head) {
+                if (current->_cofficient > 0) std::cout << "+";
+                else std::cout << "";
+            }
+        } while (current != _head);
+
+        std::cout << std::endl;
+    }
+
+    template <typename T>
+    int Node<T>::get_coeff() {
+        return this->_cofficient;
+    }
+
+    template<typename T>
     LinkedList<T>::LinkedList(int size, int upper_bound, int lover_bound) : _head(nullptr) {
         srand(time(nullptr));
         for (int i = 0; i < size; ++i) {
             T cofficient = rand() % upper_bound + lover_bound;
-            push_head(cofficient);
+            int power = rand() % 10 + 1;
+            push_head(cofficient, power);
         }
     }
 
@@ -53,7 +77,8 @@ namespace linkedList {
         srand(time(nullptr));
         for (int i = 0; i < size; ++i) {
             float cofficient = 0.001 * rand();
-            push_head(cofficient);
+            int power = rand() % 10 + 1;
+            push_head(cofficient, power);
         }
     }
 
@@ -66,7 +91,8 @@ namespace linkedList {
     }
 
     template<typename T>
-    T& LinkedList<T>::operator[](int index) {
+    T& LinkedList<T>::operator[](int index)
+    {
         int counter = 0;
         Node<T>* current = this->_head;
         do {
@@ -98,12 +124,12 @@ namespace linkedList {
     }
 
     template<typename T>
-    LinkedList<T>::LinkedList(const LinkedList<T>& other) : _head(nullptr)
+    LinkedList<T>::LinkedList(const LinkedList<T>& other) : _head(nullptr), _size(0)
     {
         if (other._head) {
             Node<T>* otherCurrent = other._head;
             do {
-                push_tail(otherCurrent->_cofficient);
+                push_tail(otherCurrent->_cofficient, otherCurrent->_power);
                 otherCurrent = otherCurrent->_next;
             } while (otherCurrent != other._head);
         }
@@ -120,7 +146,7 @@ namespace linkedList {
         if (other._head) {
             Node<T>* otherCurrent = other._head;
             do {
-                push_tail(otherCurrent->_cofficient);
+                push_tail(otherCurrent->_cofficient, otherCurrent->_power);
                 otherCurrent = otherCurrent->_next;
             } while (otherCurrent != other._head);
         }
@@ -128,9 +154,12 @@ namespace linkedList {
     }
 
     template<typename T>
-    void LinkedList<T>::push_head(T cofficient)
+    void LinkedList<T>::push_head(T cofficient, int power)
     {
-        Node<T>* _newmode = new Node<T>(cofficient);
+        if (cofficient == 0) {
+            return;
+        }
+        Node<T>* _newmode = new Node<T>(cofficient, power);
         if (!_head) {
             _head = _newmode;
             _head->_next = _head;
@@ -144,21 +173,30 @@ namespace linkedList {
         _head = _newmode;
         _size++;
     }
+
     template<typename T>
     void LinkedList<T>::push_head(LinkedList<T> other) {
         Node<T>* otherCurrent = other._head;
+        LinkedList<T> reversed_other;
         if (otherCurrent) {
             do {
-                push_head(otherCurrent->_cofficient);
+                reversed_other.push_head(otherCurrent->_cofficient, otherCurrent->_power);
                 otherCurrent = otherCurrent->_next;
             } while (otherCurrent != other._head);
+            otherCurrent = reversed_other._head;
+            do {
+                push_head(otherCurrent->_cofficient, otherCurrent->_power);
+                otherCurrent = otherCurrent->_next;
+            } while (otherCurrent != reversed_other._head);
         }
     }
 
     template<typename T>
-    void LinkedList<T>::push_tail(T coefficient) {
-        Node<T>* new_node = new Node<T>(coefficient);
-
+    void LinkedList<T>::push_tail(T coefficient, int power) {
+        if (coefficient == 0) {
+            return;
+        }
+        Node<T>* new_node = new Node<T>(coefficient, power);
         if (!_head) {
             _head = new_node;
             _head->_next = _head;
@@ -172,13 +210,14 @@ namespace linkedList {
             new_node->_next = _head;
         }
     }
-    template<typename T>
+
+     template<typename T>
     void LinkedList<T>::push_tail(LinkedList<T> other) {
         if (other._head) {
             Node<T>* otherCurrent = other._head;
             Node<T>* otherHead = other._head;
             do {
-                Node<T>* new_node = new Node<T>(otherCurrent->_cofficient);
+                Node<T>* new_node = new Node<T>(otherCurrent->_cofficient,otherCurrent->_power);
                 if (!_head) {
                     _head = new_node;
                     _head->_next = _head;
@@ -241,7 +280,6 @@ namespace linkedList {
         if (!_head) {
             return;
         }
-
         Node<T>* current = _head;
         while (current->_next != _head) {
             if (current->_next->_cofficient == node._cofficient) {
@@ -256,6 +294,7 @@ namespace linkedList {
                 current = current->_next;
             }
         }
+
         if (_head && _head->_cofficient == node._cofficient) {
             pop_head();
         }
@@ -270,12 +309,10 @@ namespace linkedList {
 
         Node<T>* current = _head;
         T result = 0;
-        int exponent = 0;
-
         do {
-            result += current->_cofficient * pow(x, exponent);
+            result += current->_cofficient * pow(x, current->_power);
             current = current->_next;
-            exponent++;
+            current->_power;
         } while (current != _head);
 
         return result;
@@ -294,7 +331,6 @@ namespace linkedList {
         do {
             if (current->_cofficient != 0) {
                 if (exponent == 0) {
-                    cout << current->_cofficient;
                 }
                 else {
                     cout << (current->_cofficient > 0 ? "+" : "") << current->_cofficient << "*x^" << exponent;
